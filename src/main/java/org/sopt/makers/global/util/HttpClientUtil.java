@@ -1,5 +1,7 @@
 package org.sopt.makers.global.util;
 
+import static org.sopt.makers.global.constant.SlackConstant.*;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -24,7 +26,7 @@ public final class HttpClientUtil {
 	public static HttpResponse<String> sendPost(String url, String contentType, String body) throws Exception {
 		HttpRequest request = HttpRequest.newBuilder()
 			.uri(URI.create(url))
-			.header("Content-Type", contentType)
+			.header(HEADER_CONTENT_TYPE, contentType)
 			.POST(HttpRequest.BodyPublishers.ofString(body))
 			.timeout(Duration.ofSeconds(TIMEOUT_SECONDS))
 			.build();
