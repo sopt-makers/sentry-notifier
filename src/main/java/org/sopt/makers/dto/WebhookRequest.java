@@ -17,6 +17,10 @@ public record WebhookRequest(
 	public static WebhookRequest from(APIGatewayProxyRequestEvent input) {
 		String stage = input.getRequestContext().getStage();
 		Map<String, String> pathParameters = input.getPathParameters();
+		if (pathParameters == null) {
+			pathParameters = Map.of();
+		}
+
 		String team = pathParameters.get("team");
 		String type = pathParameters.get("type");
 		String serviceType = pathParameters.getOrDefault("service", "slack");
