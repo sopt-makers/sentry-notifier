@@ -1,6 +1,7 @@
 package org.sopt.makers.global.util;
 
 import org.sopt.makers.global.exception.message.ErrorMessage;
+import org.sopt.makers.global.exception.unchecked.InvalidEnvParameterException;
 import org.sopt.makers.global.exception.unchecked.UnsupportedServiceTypeException;
 import org.sopt.makers.global.exception.unchecked.WebhookUrlNotFoundException;
 
@@ -30,6 +31,11 @@ public final class EnvUtil {
 	 * @throws WebhookUrlNotFoundException 환경 변수를 찾을 수 없는 경우
 	 */
 	public static String getWebhookUrl(String service, String team, String stage, String type) {
+		if (service == null || team == null || stage == null || type == null) {
+			log.error("환경 변수 입력값이 null입니다: service={}, team={}, stage={}, type={}", service, team, stage, type);
+			throw InvalidEnvParameterException.from(ErrorMessage.INVALID_ENV_PARAMETER);
+		}
+
 		String prefix = resolvePrefix(service.toLowerCase());
 		String envKey = String.format("%s%s_%s_%s",
 			prefix,
