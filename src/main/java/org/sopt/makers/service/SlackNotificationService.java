@@ -80,7 +80,7 @@ public class SlackNotificationService implements NotificationService {
 
 	private void handleSlackResponse(HttpResponse<String> response, String team, String type,
 		String stage, SentryEventDetail sentryEventDetail) throws SlackSendException {
-		if (response.statusCode() != 200) {
+		if (response.statusCode() != 200 || !"ok".equalsIgnoreCase(response.body())) {
 			String errorMsg = String.format("Slack API 응답 오류, status: %d, body: %s",
 				response.statusCode(), response.body());
 			log.error("{}", errorMsg);
