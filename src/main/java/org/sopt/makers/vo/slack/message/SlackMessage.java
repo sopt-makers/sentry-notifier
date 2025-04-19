@@ -1,4 +1,4 @@
-package org.sopt.makers.vo.slack;
+package org.sopt.makers.vo.slack.message;
 
 import java.util.List;
 
