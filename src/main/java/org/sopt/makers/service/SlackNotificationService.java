@@ -9,9 +9,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.sopt.makers.dto.SentryEventDetail;
 import org.sopt.makers.global.config.ObjectMapperConfig;
@@ -21,6 +19,13 @@ import org.sopt.makers.global.exception.checked.SlackMessageBuildException;
 import org.sopt.makers.global.exception.checked.SlackSendException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
 import org.sopt.makers.global.util.HttpClientUtil;
+import org.sopt.makers.vo.slack.SlackMessage;
+import org.sopt.makers.vo.slack.block.ActionsBlock;
+import org.sopt.makers.vo.slack.block.Block;
+import org.sopt.makers.vo.slack.block.HeaderBlock;
+import org.sopt.makers.vo.slack.block.SectionBlock;
+import org.sopt.makers.vo.slack.element.Button;
+import org.sopt.makers.vo.slack.text.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,11 +43,11 @@ public class SlackNotificationService implements NotificationService {
 	@Override
 	public void sendNotification(String team, String type, String stage, SentryEventDetail sentryEventDetail,
 		String webhookUrl) throws SentryCheckedException {
-		Map<String, Object> slackMessage = createSlackMessage(team, type, stage, sentryEventDetail);
+		SlackMessage slackMessage = createSlackMessage(team, type, stage, sentryEventDetail);
 		sendSlackMessage(slackMessage, webhookUrl, team, type, stage, sentryEventDetail);
 	}
 
-	private Map<String, Object> createSlackMessage(String team, String type, String stage,
+	private SlackMessage createSlackMessage(String team, String type, String stage,
 		SentryEventDetail sentryEventDetail) throws SentryCheckedException {
 		try {
 			return buildSlackMessage(team, type, stage, sentryEventDetail);
@@ -53,8 +58,8 @@ public class SlackNotificationService implements NotificationService {
 		}
 	}
 
-	private void sendSlackMessage(Map<String, Object> slackMessage, String webhookUrl,
-		String team, String type, String stage, SentryEventDetail sentryEventDetail) throws SentryCheckedException {
+	private void sendSlackMessage(SlackMessage slackMessage, String webhookUrl, String team, String type, String stage,
+		SentryEventDetail sentryEventDetail) throws SentryCheckedException {
 		try {
 			String jsonPayload = objectMapper.writeValueAsString(slackMessage);
 			HttpResponse<String> response = HttpClientUtil.sendPost(webhookUrl, CONTENT_TYPE_JSON, jsonPayload);
@@ -89,95 +94,54 @@ public class SlackNotificationService implements NotificationService {
 	/**
 	 * Slack 메시지 구성
 	 */
-	private Map<String, Object> buildSlackMessage(String team, String type, String stage,
+	private SlackMessage buildSlackMessage(String team, String type, String stage,
 		SentryEventDetail sentryEventDetail) {
 		String formattedDate = formatDateTime(sentryEventDetail.datetime());
 		String color = Color.getColorByLevel(sentryEventDetail.level());
 
-		List<Map<String, Object>> blocks = new ArrayList<>();
+		List<Block> blocks = new ArrayList<>();
 		blocks.add(buildHeaderBlock(sentryEventDetail.level()));
 		blocks.add(buildDetailsBlock(team, type, stage, formattedDate));
 		blocks.add(buildMessageBlock(sentryEventDetail.message()));
 		blocks.add(buildActionsBlock(sentryEventDetail.webUrl()));
 
-		Map<String, Object> slackMessage = new HashMap<>();
-		slackMessage.put(JSON_BLOCKS, blocks);
-		slackMessage.put(JSON_COLOR, color);
-
-		return slackMessage;
+		return SlackMessage.newInstance(blocks, color);
 	}
 
 	/**
 	 * 헤더 블록 구성
 	 */
-	private Map<String, Object> buildHeaderBlock(String level) {
-		return Map.of(
-			JSON_TYPE, BLOCK_TYPE_HEADER,
-			JSON_TEXT, Map.of(
-				JSON_TYPE, TEXT_TYPE_PLAIN,
-				JSON_TEXT, String.format("[%s] 오류 발생", level.toUpperCase()),
-				JSON_EMOJI, true
-			)
-		);
+	private Block buildHeaderBlock(String level) {
+		return HeaderBlock.newInstance(String.format("[%s] 오류 발생", level.toUpperCase()));
 	}
 
 	/**
 	 * 상세 정보 블록 구성
 	 */
-	private Map<String, Object> buildDetailsBlock(String team, String type, String stage, String date) {
-		Map<String, Object> block = new HashMap<>();
-		block.put(JSON_TYPE, BLOCK_TYPE_SECTION);
-		block.put(JSON_FIELDS, List.of(
-			createField(String.format("*환경:*%s%s", NEW_LINE, stage)),
-			createField(String.format("*팀:*%s%s", NEW_LINE, team)),
-			createField(String.format("*유형:*%s%s", NEW_LINE, type)),
-			createField(String.format("*발생 시간:*%s%s", NEW_LINE, date))
-		));
-		return block;
+	private SectionBlock buildDetailsBlock(String team, String type, String stage, String date) {
+		List<Text> fields = List.of(
+			Text.newFieldInstance(String.format("*환경:*%s%s", NEW_LINE, stage)),
+			Text.newFieldInstance(String.format("*팀:*%s%s", NEW_LINE, team)),
+			Text.newFieldInstance(String.format("*유형:*%s%s", NEW_LINE, type)),
+			Text.newFieldInstance(String.format("*발생 시간:*%s%s", NEW_LINE, date))
+		);
+		return SectionBlock.newInstanceWithFields(fields);
 	}
 
 	/**
 	 * 메시지 블록 구성
 	 */
-	private Map<String, Object> buildMessageBlock(String message) {
-		return Map.of(
-			JSON_TYPE, BLOCK_TYPE_SECTION,
-			JSON_TEXT, Map.of(
-				JSON_TYPE, TEXT_TYPE_MARKDOWN,
-				JSON_TEXT, String.format("*오류 메시지:*%s%s", NEW_LINE, message)
-			)
+	private Block buildMessageBlock(String message) {
+		return SectionBlock.newInstanceWithText(
+			Text.newFieldInstance(String.format("*오류 메시지:*%s%s", NEW_LINE, message))
 		);
 	}
 
 	/**
 	 * 액션 블록 구성 (버튼)
 	 */
-	private Map<String, Object> buildActionsBlock(String webUrl) {
-		Map<String, Object> button = Map.of(
-			JSON_TYPE, ELEMENT_TYPE_BUTTON,
-			JSON_TEXT, Map.of(
-				JSON_TYPE, TEXT_TYPE_PLAIN,
-				JSON_TEXT, SENTRY_BUTTON_TEXT,
-				JSON_EMOJI, true
-			),
-			JSON_STYLE, STYLE_PRIMARY,
-			JSON_URL, webUrl
-		);
-
-		return Map.of(
-			JSON_TYPE, BLOCK_TYPE_ACTIONS,
-			JSON_ELEMENTS, List.of(button)
-		);
-	}
-
-	/**
-	 * 필드 생성
-	 */
-	private Map<String, Object> createField(String text) {
-		return Map.of(
-			JSON_TYPE, TEXT_TYPE_MARKDOWN,
-			JSON_TEXT, text
-		);
+	private Block buildActionsBlock(String webUrl) {
+		return ActionsBlock.newInstance(List.of(Button.newInstance(SENTRY_BUTTON_TEXT, webUrl)));
 	}
 
 	/**
