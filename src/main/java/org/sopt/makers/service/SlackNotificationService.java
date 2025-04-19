@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -148,9 +149,8 @@ public class SlackNotificationService implements NotificationService {
 	 * ISO 날짜 포맷팅
 	 */
 	private String formatDateTime(String isoDatetime) {
-		LocalDateTime dateTime = LocalDateTime.parse(isoDatetime, DateTimeFormatter.ISO_DATE_TIME);
-		LocalDateTime koreaTime = dateTime.atZone(ZoneId.of("UTC"))
-			.withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+		OffsetDateTime utcTime = OffsetDateTime.parse(isoDatetime, DateTimeFormatter.ISO_DATE_TIME);
+		LocalDateTime koreaTime = utcTime.atZoneSameInstant(ZoneId.of(TIMEZONE_SEOUL))
 			.toLocalDateTime();
 		return koreaTime.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN));
 	}

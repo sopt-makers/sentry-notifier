@@ -30,6 +30,9 @@ public final class SlackConstant {
 	// 스타일 상수
 	public static final String STYLE_PRIMARY = "primary";
 
+	// 시간대 관련 상수
+	public static final String TIMEZONE_SEOUL = "Asia/Seoul";
+
 	// 줄바꿈 상수
 	public static final String NEW_LINE = "\n";
 
