@@ -1,0 +1,36 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '✨ 새로운 기능'
+    labels: ['feat']
+  - title: '🐞 버그 수정'
+    labels: ['fix']
+  - title: '🧹 코드 개선 및 리팩토링'
+    labels: ['refactor', 'style', 'chore']
+  - title: '🧪 테스트'
+    labels: ['test']
+  - title: '🛠 문서 및 기타 변경'
+    labels: ['docs']
+
+change-template: '- $TITLE (#$NUMBER by @$AUTHOR)'
+no-changes-template: '이번 릴리스에는 변경 사항이 없습니다.'
+
+template: |
+  ## 🚀 릴리스 노트: v$RESOLVED_VERSION
+  아래는 이번 릴리스에 포함된 변경 사항입니다.
+  ---
+
+  $CHANGES
+
+version-resolver:
+  major:
+    labels:
+      - '1️⃣ major'
+  minor:
+    labels:
+      - '2️⃣ minor'
+  patch:
+    labels:
+      - '3️⃣ patch'
+  default: patch
