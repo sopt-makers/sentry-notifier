@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.sopt.makers.dto.SentryEventDetail;
+import org.sopt.makers.dto.WebhookRequest;
 import org.sopt.makers.global.config.ObjectMapperConfig;
 import org.sopt.makers.global.exception.checked.SentryCheckedException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
@@ -38,13 +39,14 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent input, Context context) {
 		try {
 			// 1. 경로 파라미터 추출
-			String stage = input.getRequestContext().getStage();
-			Map<String, String> pathParameters = input.getPathParameters();
-			String team = pathParameters.get("team");
-			String type = pathParameters.get("type");
-			String serviceType = pathParameters.getOrDefault("service", "slack"); // 기본값은 slack
+			WebhookRequest webhookRequest = WebhookRequest.from(input);
+			String stage = webhookRequest.stage();
+			String team = webhookRequest.team();
+			String type = webhookRequest.type();
+			String serviceType = webhookRequest.serviceType();
 
-			log.info("[웹훅 수신] stage={}, team={}, type={}, service={}", stage, team, type, serviceType);
+			log.info("[웹훅 수신] stage={}, team={}, type={}, service={}", webhookRequest.stage(), webhookRequest.team(),
+				webhookRequest.type(), webhookRequest.serviceType());
 
 			// 2. Sentry 웹훅 데이터 파싱
 			String requestBody = input.getBody();
@@ -63,7 +65,6 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 			// 4. 알림 서비스 결정 및 알림 전송
 			NotificationService notificationService = NotificationServiceFactory.createNotificationService(serviceType);
 			String webhookUrl = EnvUtil.getWebhookUrl(serviceType, team, stage, type);
-
 			notificationService.sendNotification(team, type, stage, sentryEventDetail, webhookUrl);
 
 			// 5. 응답 반환
