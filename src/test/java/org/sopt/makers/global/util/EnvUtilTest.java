@@ -28,7 +28,7 @@ class EnvUtilTest {
 	static void setUp() throws IOException {
 		String content = """
                 SLACK_WEBHOOK_CREW_DEV_BE=https://hooks.slack.com/services/crew/dev/be
-                SLACK_WEBHOOK_APP_PROD_FE=https://hooks.slack.com/services/app/frod/fe
+                SLACK_WEBHOOK_APP_PROD_FE=https://hooks.slack.com/services/app/prod/fe
                 """;
 		Files.createDirectories(Paths.get("src/main/resources"));
 		Files.write(Paths.get(ENV_FILE_PATH), content.getBytes());
@@ -51,9 +51,11 @@ class EnvUtilTest {
 	@DisplayName("존재하지 않는 키로 Webhook URL 조회 시 예외를 발생시킨다")
 	@Test
 	void testGetWebhookUrl_notFound() {
-		assertThrows(WebhookUrlNotFoundException.class, () ->
+		WebhookUrlNotFoundException exception = assertThrows(WebhookUrlNotFoundException.class, () ->
 			EnvUtil.getWebhookUrl("slack", "crew", "prod", "be")
 		);
+
+		assertTrue(exception.getMessage().contains("Webhook URL을 찾을 수 없습니다."));
 	}
 
 	@DisplayName("지원하지 않는 서비스 타입 입력 시 예외를 발생시킨다")
@@ -78,15 +80,21 @@ class EnvUtilTest {
 	@CsvSource({
 		"SLACK, CREW, DEV, BE",
 		"slack, crew, dev, be",
-		"SlAcK, CrEw, DeV, Be"
+		"SlAcK, CrEw, DeV, Be",
+		"slack, APP, PROD, FE",
+		"SLACK, app, prod, fe",
+		"SlAcK, ApP, PrOd, Fe"
 	})
 	void testGetWebhookUrl_caseInsensitive(String service, String team, String stage, String type) {
-		String expectedUrl = "https://hooks.slack.com/services/crew/dev/be";
+		if (team.equalsIgnoreCase("app")) {
+			String actualUrl = EnvUtil.getWebhookUrl(service, team, stage, type);
+			assertEquals("https://hooks.slack.com/services/app/prod/fe", actualUrl);
+			return;
+		}
+
 		String actualUrl = EnvUtil.getWebhookUrl(service, team, stage, type);
-
-		assertEquals(expectedUrl, actualUrl);
+		assertEquals("https://hooks.slack.com/services/crew/dev/be", actualUrl);
 	}
-
 	private static Stream<Arguments> provideNullParameters() {
 		return Stream.of(
 			Arguments.of(null, "crew", "dev", "be"),
