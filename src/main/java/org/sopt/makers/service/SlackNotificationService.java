@@ -19,8 +19,9 @@ import org.sopt.makers.global.exception.checked.SentryCheckedException;
 import org.sopt.makers.global.exception.checked.SlackMessageBuildException;
 import org.sopt.makers.global.exception.checked.SlackSendException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
+import org.sopt.makers.global.exception.unchecked.HttpRequestException;
 import org.sopt.makers.global.util.HttpClientUtil;
-import org.sopt.makers.vo.slack.SlackMessage;
+import org.sopt.makers.vo.slack.message.SlackMessage;
 import org.sopt.makers.vo.slack.block.ActionsBlock;
 import org.sopt.makers.vo.slack.block.Block;
 import org.sopt.makers.vo.slack.block.HeaderBlock;
@@ -65,17 +66,10 @@ public class SlackNotificationService implements NotificationService {
 			String jsonPayload = objectMapper.writeValueAsString(slackMessage);
 			HttpResponse<String> response = HttpClientUtil.sendPost(webhookUrl, CONTENT_TYPE_JSON, jsonPayload);
 			handleSlackResponse(response, team, type, stage, sentryEventDetail);
-
+		} catch (HttpRequestException e) {
+			throw SlackSendException.from(e.getBaseErrorCode());
 		} catch (IOException e) {
-			log.error("Slack 네트워크 오류: {}", e.getMessage(), e);
-			throw SlackSendException.from(ErrorMessage.SLACK_NETWORK_ERROR);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			log.error("Slack 전송 중단: {}", e.getMessage(), e);
-			throw SlackSendException.from(ErrorMessage.SLACK_SEND_INTERRUPTED);
-		} catch (Exception e) {
-			log.error("Slack 알림 전송 실패: {}", e.getMessage(), e);
-			throw SlackSendException.from(ErrorMessage.SLACK_SEND_FAILED);
+			throw SlackSendException.from(ErrorMessage.SLACK_SERIALIZATION_FAILED);
 		}
 	}
 
