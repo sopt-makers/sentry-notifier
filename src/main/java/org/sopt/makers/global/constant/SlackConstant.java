@@ -32,15 +32,4 @@ public final class SlackConstant {
 
 	// 줄바꿈 상수
 	public static final String NEW_LINE = "\n";
-
-	// JSON 키 상수
-	public static final String JSON_TYPE = "type";
-	public static final String JSON_TEXT = "text";
-	public static final String JSON_EMOJI = "emoji";
-	public static final String JSON_FIELDS = "fields";
-	public static final String JSON_BLOCKS = "blocks";
-	public static final String JSON_ELEMENTS = "elements";
-	public static final String JSON_URL = "url";
-	public static final String JSON_STYLE = "style";
-	public static final String JSON_COLOR = "color";
 }
