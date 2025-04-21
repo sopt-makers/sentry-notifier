@@ -1,0 +1,95 @@
+name: sentry-notifier-lambda-cd
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - name: Setup Gradle with caching
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create .env file
+        run: |
+          mkdir -p src/main/resources
+          cat << EOF > src/main/resources/.env
+          SLACK_WEBHOOK_CREW_DEV_BE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_BE }}
+          SLACK_WEBHOOK_CREW_DEV_FE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_FE }}
+          SLACK_WEBHOOK_CREW_PROD_BE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_BE }}
+          SLACK_WEBHOOK_CREW_PROD_FE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_FE }}
+          EOF
+
+      - name: Build shadow JAR (default = shadowJar)
+        run: ./gradlew build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Deploy to AWS Lambda
+        run: |
+          export AWS_PAGER=""
+          aws lambda update-function-code \
+            --function-name sentry-notifier \
+            --zip-file fileb://build/libs/sentry-webhook-shadow.jar
+
+      - name: Notify Slack on success
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "good",
+                "title": "✅ Lambda 배포 성공",
+                "text": "Sentry Notifier Lambda가 성공적으로 배포되었습니다.",
+                "fields": [
+                  {
+                    "title": "Workflow Link",
+                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>",
+                    "short": true
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WEBHOOK_URL }}
+
+      - name: Notify Slack on failure
+        uses: 8398a7/action-slack@v3
+        if: failure()
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "danger",
+                "title": "❌ Lambda 배포 실패",
+                "text": "Sentry Notifier Lambda 배포에 실패했습니다.",
+                "fields": [
+                  {
+                    "title": "Workflow Link",
+                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>",
+                    "short": true
+                  }
+                ]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WEBHOOK_URL }}
