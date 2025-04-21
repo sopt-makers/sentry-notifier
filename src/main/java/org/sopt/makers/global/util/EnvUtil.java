@@ -15,9 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class EnvUtil {
 	private static final String SLACK_WEBHOOK_PREFIX = "SLACK_WEBHOOK_";
 	private static final String DISCORD_WEBHOOK_PREFIX = "DISCORD_WEBHOOK_";
-	private static final Dotenv dotenv = Dotenv.configure()
-		.directory("src/main/resources")  // .env 파일 경로 지정
-		.load();
+	private static final Dotenv dotenv = Dotenv.configure().load();
 
 	/**
 	 * 서비스 유형에 맞는 웹훅 URL 반환
