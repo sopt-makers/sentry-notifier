@@ -22,7 +22,7 @@ import org.sopt.makers.global.exception.unchecked.WebhookUrlNotFoundException;
 @DisplayName("EnvUtil 테스트")
 class EnvUtilTest {
 
-	private static final String ENV_FILE_PATH = "src/main/resources/.env";
+	private static final String ENV_FILE_PATH = "src/test/resources/.env";
 
 	@BeforeAll
 	static void setUp() throws IOException {
@@ -30,7 +30,7 @@ class EnvUtilTest {
                 SLACK_WEBHOOK_CREW_DEV_BE=https://hooks.slack.com/services/crew/dev/be
                 SLACK_WEBHOOK_APP_PROD_FE=https://hooks.slack.com/services/app/prod/fe
                 """;
-		Files.createDirectories(Paths.get("src/main/resources"));
+		Files.createDirectories(Paths.get("src/test/resources"));
 		Files.write(Paths.get(ENV_FILE_PATH), content.getBytes());
 	}
 
