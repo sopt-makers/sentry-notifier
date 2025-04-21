@@ -22,7 +22,7 @@ import org.sopt.makers.global.exception.unchecked.WebhookUrlNotFoundException;
 @DisplayName("EnvUtil 테스트")
 class EnvUtilTest {
 
-	private static final String ENV_FILE_PATH = "src/main/resources/.env";
+	private static final String ENV_FILE_PATH = "src/test/resources/.env";
 
 	@BeforeAll
 	static void setUp() throws IOException {
@@ -30,7 +30,7 @@ class EnvUtilTest {
                 SLACK_WEBHOOK_CREW_DEV_BE=https://hooks.slack.com/services/crew/dev/be
                 SLACK_WEBHOOK_APP_PROD_FE=https://hooks.slack.com/services/app/prod/fe
                 """;
-		Files.createDirectories(Paths.get("src/main/resources"));
+		Files.createDirectories(Paths.get("src/test/resources"));
 		Files.write(Paths.get(ENV_FILE_PATH), content.getBytes());
 	}
 
@@ -43,7 +43,7 @@ class EnvUtilTest {
 	@Test
 	void testGetWebhookUrl_valid() {
 		String expectedUrl = "https://hooks.slack.com/services/crew/dev/be";
-		String actualUrl = EnvUtil.getWebhookUrl("slack", "crew", "dev", "be");
+		String actualUrl = TestEnvUtil.getWebhookUrl("slack", "crew", "dev", "be");
 
 		assertEquals(expectedUrl, actualUrl);
 	}
@@ -52,7 +52,7 @@ class EnvUtilTest {
 	@Test
 	void testGetWebhookUrl_notFound() {
 		WebhookUrlNotFoundException exception = assertThrows(WebhookUrlNotFoundException.class, () ->
-			EnvUtil.getWebhookUrl("slack", "crew", "prod", "be")
+			TestEnvUtil.getWebhookUrl("slack", "crew", "prod", "be")
 		);
 
 		assertTrue(exception.getMessage().contains("Webhook URL을 찾을 수 없습니다."));
@@ -62,7 +62,7 @@ class EnvUtilTest {
 	@Test
 	void testGetWebhookUrl_unsupportedServiceType() {
 		assertThrows(UnsupportedServiceTypeException.class, () ->
-			EnvUtil.getWebhookUrl("telegram", "crew", "dev", "be")
+			TestEnvUtil.getWebhookUrl("telegram", "crew", "dev", "be")
 		);
 	}
 
@@ -71,7 +71,7 @@ class EnvUtilTest {
 	@MethodSource("provideNullParameters")
 	void testGetWebhookUrl_withNullParameters_shouldThrow(String service, String team, String stage, String type) {
 		assertThrows(InvalidEnvParameterException.class, () ->
-			EnvUtil.getWebhookUrl(service, team, stage, type)
+			TestEnvUtil.getWebhookUrl(service, team, stage, type)
 		);
 	}
 
@@ -87,12 +87,12 @@ class EnvUtilTest {
 	})
 	void testGetWebhookUrl_caseInsensitive(String service, String team, String stage, String type) {
 		if (team.equalsIgnoreCase("app")) {
-			String actualUrl = EnvUtil.getWebhookUrl(service, team, stage, type);
+			String actualUrl = TestEnvUtil.getWebhookUrl(service, team, stage, type);
 			assertEquals("https://hooks.slack.com/services/app/prod/fe", actualUrl);
 			return;
 		}
 
-		String actualUrl = EnvUtil.getWebhookUrl(service, team, stage, type);
+		String actualUrl = TestEnvUtil.getWebhookUrl(service, team, stage, type);
 		assertEquals("https://hooks.slack.com/services/crew/dev/be", actualUrl);
 	}
 	private static Stream<Arguments> provideNullParameters() {

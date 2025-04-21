@@ -6,16 +6,13 @@ import org.sopt.makers.global.exception.unchecked.UnsupportedServiceTypeExceptio
 import org.sopt.makers.global.exception.unchecked.WebhookUrlNotFoundException;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class EnvUtil {
+class TestEnvUtil {
 	private static final String SLACK_WEBHOOK_PREFIX = "SLACK_WEBHOOK_";
 	private static final String DISCORD_WEBHOOK_PREFIX = "DISCORD_WEBHOOK_";
-	private static final Dotenv dotenv = Dotenv.configure().load();
+	private static final Dotenv dotenv = Dotenv.configure()
+		.directory("src/test/resources")
+		.load();
 
 	/**
 	 * 서비스 유형에 맞는 웹훅 URL 반환
@@ -30,7 +27,6 @@ public final class EnvUtil {
 	 */
 	public static String getWebhookUrl(String service, String team, String stage, String type) {
 		if (service == null || team == null || stage == null || type == null) {
-			log.error("환경 변수 입력값이 null입니다: service={}, team={}, stage={}, type={}", service, team, stage, type);
 			throw InvalidEnvParameterException.from(ErrorMessage.INVALID_ENV_PARAMETER);
 		}
 
@@ -44,7 +40,6 @@ public final class EnvUtil {
 		String webhookUrl = dotenv.get(envKey);
 
 		if (webhookUrl == null || webhookUrl.isBlank()) {
-			log.error("Webhook URL을 찾을 수 없습니다: {}", envKey);
 			throw new WebhookUrlNotFoundException(ErrorMessage.WEBHOOK_URL_NOT_FOUND);
 		}
 
