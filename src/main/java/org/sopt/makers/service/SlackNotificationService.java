@@ -64,6 +64,7 @@ public class SlackNotificationService implements NotificationService {
 		SentryEventDetail sentryEventDetail) throws SentryCheckedException {
 		try {
 			String jsonPayload = objectMapper.writeValueAsString(slackMessage);
+			log.info("슬랙 메시지: {}", jsonPayload);
 			HttpResponse<String> response = HttpClientUtil.sendPost(webhookUrl, CONTENT_TYPE_JSON, jsonPayload);
 			handleSlackResponse(response, team, type, stage, sentryEventDetail);
 		} catch (HttpRequestException e) {
