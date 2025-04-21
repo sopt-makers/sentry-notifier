@@ -1,0 +1,37 @@
+name: sentry-notifier-lambda-ci
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+
+      - name: Setup Gradle with caching
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create .env file
+        run: |
+          mkdir -p src/main/resources
+          cat > src/main/resources/.env << EOL
+          SLACK_WEBHOOK_CREW_DEV_BE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_BE }}
+          SLACK_WEBHOOK_CREW_DEV_FE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_FE }}
+          SLACK_WEBHOOK_CREW_PROD_BE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_BE }}
+          SLACK_WEBHOOK_CREW_PROD_FE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_FE }}
+          EOL
+
+      - name: Compile and run test
+        run: |
+          ./gradlew check
