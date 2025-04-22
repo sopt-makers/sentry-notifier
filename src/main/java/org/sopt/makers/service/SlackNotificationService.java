@@ -21,12 +21,13 @@ import org.sopt.makers.global.exception.checked.SlackSendException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
 import org.sopt.makers.global.exception.unchecked.HttpRequestException;
 import org.sopt.makers.global.util.HttpClientUtil;
-import org.sopt.makers.vo.slack.message.SlackMessage;
 import org.sopt.makers.vo.slack.block.ActionsBlock;
 import org.sopt.makers.vo.slack.block.Block;
 import org.sopt.makers.vo.slack.block.HeaderBlock;
 import org.sopt.makers.vo.slack.block.SectionBlock;
 import org.sopt.makers.vo.slack.element.Button;
+import org.sopt.makers.vo.slack.message.SlackMessage;
+import org.sopt.makers.vo.slack.text.MarkdownText;
 import org.sopt.makers.vo.slack.text.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,8 +55,8 @@ public class SlackNotificationService implements NotificationService {
 		try {
 			return buildSlackMessage(team, type, stage, sentryEventDetail);
 		} catch (DateTimeException e) {
-			log.error("Slack 메시지 생성 실패: team={}, type={}, stage={}, id={}, error={}",
-				team, type, stage, sentryEventDetail.issueId(), e.getMessage(), e);
+			log.error("Slack 메시지 생성 실패: team={}, type={}, stage={}, id={}, error={}", team, type, stage,
+				sentryEventDetail.issueId(), e.getMessage(), e);
 			throw SlackMessageBuildException.from(ErrorMessage.SLACK_MESSAGE_BUILD_FAILED);
 		}
 	}
@@ -74,17 +75,17 @@ public class SlackNotificationService implements NotificationService {
 		}
 	}
 
-	private void handleSlackResponse(HttpResponse<String> response, String team, String type,
-		String stage, SentryEventDetail sentryEventDetail) throws SlackSendException {
+	private void handleSlackResponse(HttpResponse<String> response, String team, String type, String stage,
+		SentryEventDetail sentryEventDetail) throws SlackSendException {
 		if (response.statusCode() != 200 || !"ok".equalsIgnoreCase(response.body())) {
-			String errorMsg = String.format("Slack API 응답 오류, status: %d, body: %s",
-				response.statusCode(), response.body());
+			String errorMsg = String.format("Slack API 응답 오류, status: %d, body: %s", response.statusCode(),
+				response.body());
 			log.error("{}", errorMsg);
 			throw SlackSendException.from(ErrorMessage.SLACK_SEND_FAILED);
 		}
 
-		log.info("[Slack 전송 완료] team={}, type={}, stage={}, id={}, statusCode={}",
-			team, type, stage, sentryEventDetail.issueId(), response.statusCode());
+		log.info("[Slack 전송 완료] team={}, type={}, stage={}, id={}, statusCode={}", team, type, stage,
+			sentryEventDetail.issueId(), response.statusCode());
 	}
 
 	/**
@@ -96,9 +97,10 @@ public class SlackNotificationService implements NotificationService {
 		String color = Color.getColorByLevel(sentryEventDetail.level());
 
 		List<Block> blocks = new ArrayList<>();
-		blocks.add(buildHeaderBlock(sentryEventDetail.level()));
-		blocks.add(buildDetailsBlock(team, type, stage, formattedDate));
-		blocks.add(buildMessageBlock(sentryEventDetail.message()));
+		blocks.add(buildHeaderBlock(sentryEventDetail.message()));
+		blocks.add(buildDetailsBlock(team, type, stage, formattedDate, sentryEventDetail.issueId(),
+			sentryEventDetail.level()));
+		blocks.add(buildMessageBlock(sentryEventDetail.title()));
 		blocks.add(buildActionsBlock(sentryEventDetail.webUrl()));
 
 		return SlackMessage.newInstance(blocks, color);
@@ -107,30 +109,36 @@ public class SlackNotificationService implements NotificationService {
 	/**
 	 * 헤더 블록 구성
 	 */
-	private Block buildHeaderBlock(String level) {
-		return HeaderBlock.newInstance(String.format("[%s] 오류 발생", level.toUpperCase()));
+	private Block buildHeaderBlock(String message) {
+		return HeaderBlock.newInstance(message);
 	}
 
 	/**
 	 * 상세 정보 블록 구성
 	 */
-	private SectionBlock buildDetailsBlock(String team, String type, String stage, String date) {
-		List<Text> fields = List.of(
-			Text.newFieldInstance(String.format("*환경:*%s%s", NEW_LINE, stage)),
-			Text.newFieldInstance(String.format("*팀:*%s%s", NEW_LINE, team)),
-			Text.newFieldInstance(String.format("*유형:*%s%s", NEW_LINE, type)),
-			Text.newFieldInstance(String.format("*발생 시간:*%s%s", NEW_LINE, date))
-		);
+	private Block buildDetailsBlock(String team, String type, String stage, String date, String issueId, String level) {
+		List<Text> fields = List.of(MarkdownText.newInstance(String.format("*Environment:*%s%s", NEW_LINE, stage)),
+			MarkdownText.newInstance(String.format("*Team:*%s%s", NEW_LINE, team)),
+			MarkdownText.newInstance(String.format("*Server Type:*%s%s", NEW_LINE, type)),
+			MarkdownText.newInstance(String.format("*Issue Id:*%s%s", NEW_LINE, issueId)),
+			MarkdownText.newInstance(String.format("*Happen:*%s%s", NEW_LINE, date)),
+			MarkdownText.newInstance(String.format("*Level:*%s%s", NEW_LINE, level)));
+
 		return SectionBlock.newInstanceWithFields(fields);
 	}
 
 	/**
 	 * 메시지 블록 구성
 	 */
-	private Block buildMessageBlock(String message) {
-		return SectionBlock.newInstanceWithText(
-			Text.newFieldInstance(String.format("*오류 메시지:*%s%s", NEW_LINE, message))
-		);
+	private Block buildMessageBlock(String title) {
+		Text text = MarkdownText.newInstance("""
+			*Error Details:*
+			```
+			%s
+			```
+			""".formatted(title.trim()));
+
+		return SectionBlock.newInstanceWithText(text);
 	}
 
 	/**
@@ -145,8 +153,7 @@ public class SlackNotificationService implements NotificationService {
 	 */
 	private String formatDateTime(String isoDatetime) {
 		OffsetDateTime utcTime = OffsetDateTime.parse(isoDatetime, DateTimeFormatter.ISO_DATE_TIME);
-		LocalDateTime koreaTime = utcTime.atZoneSameInstant(ZoneId.of(TIMEZONE_SEOUL))
-			.toLocalDateTime();
+		LocalDateTime koreaTime = utcTime.atZoneSameInstant(ZoneId.of(TIMEZONE_SEOUL)).toLocalDateTime();
 		return koreaTime.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN));
 	}
 }
