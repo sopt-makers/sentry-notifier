@@ -67,10 +67,10 @@ Sentry는 **뛰어난 에러 모니터링 도구**지만, Slack과의 공식 연
 
 ### 외부 알림 채널 연동 (확장 가능)
 - 알림 채널 전송 로직은 **`NotificationService` 인터페이스와 이를 구현한 서비스들로 분리**되어 있으며, **`Factory` 패턴을 사용해 유연하게 확장할 수 있도록 설계되었습니다.**
-    - `NotificationService`는 공통된 `sendNotification()` 메서드를 정의하고 있으며, 각 서비스별 구현체가 해당 인터페이스를 구현합니다.
-    - `NotificationServiceFactory`는 `WebhookRequest` DTO의 `serviceType(e.g., "slack", "discord")`필드를 기반으로 적절한 알림 서비스 인스턴스를 반환합니다.
-        - 예: `"serviceType": "slack"` → `SlackNotificationService` 인스턴스, `"serviceType": "discord"` → `DiscordNotificationService` 인스턴스
-        - 미등록 서비스 유형 요청 시 `UnsupportedServiceTypeException` 예외 발생
+  - `NotificationService`는 공통된 `sendNotification()` 메서드를 정의하고 있으며, 각 서비스별 구현체가 해당 인터페이스를 구현합니다.
+  - `NotificationServiceFactory`는 `WebhookRequest` DTO의 `serviceType(e.g., "slack", "discord")`필드를 기반으로 적절한 알림 서비스 인스턴스를 반환합니다.
+    - 예: `"serviceType": "slack"` → `SlackNotificationService` 인스턴스, `"serviceType": "discord"` → `DiscordNotificationService` 인스턴스
+    - 미등록 서비스 유형 요청 시 `UnsupportedServiceTypeException` 예외 발생
 
 - 이 구조 덕분에, 새로운 알림 채널(예: `Microsoft Teams`, `Mattermost` 등)을 추가하고 싶다면 다음 두 단계만으로 확장 가능합니다:
     1. `NotificationService를` 구현하는 새 클래스 생성
