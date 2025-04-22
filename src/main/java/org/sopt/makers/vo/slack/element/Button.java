@@ -1,7 +1,9 @@
 package org.sopt.makers.vo.slack.element;
 
-import org.sopt.makers.vo.slack.text.Text;
 import static org.sopt.makers.global.constant.SlackConstant.*;
+
+import org.sopt.makers.vo.slack.text.PlainText;
+import org.sopt.makers.vo.slack.text.Text;
 
 public record Button(
 	String type,
@@ -10,6 +12,6 @@ public record Button(
 	String url
 ) implements Element {
 	public static Button newInstance(String text, String url) {
-		return new Button(ELEMENT_TYPE_BUTTON, Text.newPlainInstance(text, true), STYLE_PRIMARY, url);
+		return new Button(ELEMENT_TYPE_BUTTON, PlainText.newInstance(text, true), STYLE_PRIMARY, url);
 	}
 }
