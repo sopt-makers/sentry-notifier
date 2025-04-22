@@ -40,7 +40,7 @@ Spring 없이 Java만으로 경량 구현된 이 Lambda 함수는 다음과 같�
 - 요청 경로 형식: `/webhook/{team}/{type}/{service}`
   - `team` 예시 - `playground`, `crew`, `app`, `platform`, `admin`  
   - `type` 예시 - `fe`, `be`, `ios`, `android`
-  - ``service`` 예시 - `slack`, `discord`
+  - `service` 예시 - `slack`, `discord`
     - 해당 필드를 생략하면 기본값으로 `slack`이 사용됩니다.
 
 ### 외부 알림 채널 연동 (확장 가능)
