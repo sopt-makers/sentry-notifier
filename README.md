@@ -79,3 +79,11 @@ footer (선택 사항)
 - `test`: 테스트 코드 추가/수정
 - `chore`: 빌드 프로세스, 패키지 매니저 설정 등 변경
 - `delete`: 사용하지 않는 코드, 파일, 또는 리소스 삭제
+
+
+## 📸 Implementation Results
+<img src="https://github.com/user-attachments/assets/0ef3eb16-3c37-4409-892f-ec5b3f04d707" alt="Sentry-Notifier FE 스크린샷">
+
+<br>
+
+<img src="https://github.com/user-attachments/assets/b58b9c70-2bd0-4f82-a85d-9d2bf6b9d086" alt="Sentry-Notifier BE 스크린샷">
