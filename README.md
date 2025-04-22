@@ -1,34 +1,59 @@
 # sentry-notifier
-> Sentry Webhook을 수신하여 팀별로 알림을 분기 전송하는 AWS Lambda 서비스
+> Sentry Webhook을 수신해, 팀명과 서버 유형에 따라 알림을 분기 전송하는 Java 기반 AWS Lambda 서비스
 
 ## ✨ Overview
 
-이 프로젝트는 **Sentry에서 발생한 에러 이벤트를 수신**하고, 
-이를 **팀명과 서버 유형(FE/BE 등)에 따라 분기 처리**하여
-슬랙 등의 외부 알림 채널로 전송해주는 Lambda 기반 서비스입니다.
+이 프로젝트는 **Sentry에서 발생한 에러 이벤트를 수신**하고, **운영 환경과 팀명/서버 유형(FE/BE 등)을 기반으로 분기 처리**하여 Slack 등 외부 채널로 전달하는 경량 **Java 기반 AWS Lambda 알림 서비스**입니다.
 
-본 프로젝트는 Sentry 이벤트를 Slack으로 전송하는 AWS Lambda 함수를 구현하기 위해 Spring 없이 Java만으로 구현했습니다. 
-이러한 기술적 결정에는 다음과 같은 이유가 있습니다:
+Spring 없이 Java만으로 경량 구현된 이 Lambda 함수는 다음과 같은 이유로 설계되었습니다:
 
-- **AWS Lambda 콜드 스타트 최소화**: SpringBoot와 같은 무거운 프레임워크는 초기화 시간이 길어 Lambda의 콜드 스타트 지연 문제를 악화시킬 수 있습니다. 그래서 순수 Java로만 구현하여 시작 시간을 단축했습니다.
-- **리소스 효율성**: 경량화된 애플리케이션으로 Lambda의 메모리 사용량을 최소화하고, 이는 비용 효율성으로 이어집니다.
-- **조직 친화적 기술 스택**: Kotlin + Ktor와 같은 대안도 고려했지만, BE 챕터원들이 메이커스 프로젝트 개발에 Java를 주로 사용하고 있다는 점을 고려했습니다. 새로운 언어 도입 시 팀 내 지식 공유와 유지보수에 추가적인 부담이 발생할 수 있어 기존 기술 스택인 Java를 선택했습니다.
-- **최소 의존성**: 필요한 최소한의 라이브러리만 사용하여 배포 패키지 크기를 줄이고 시작 시간을 개선했습니다.
+- **빠른 콜드 스타트**: SpringBoot는 초기화 시간이 길어 Lambda 환경에서 지연이 발생할 수 있습니다. 순수 Java로 구현하여 시작 시간을 최소화했습니다.
+- **리소스와 비용 효율성**: 메모리 사용량을 줄여 실행 비용도 함께 절감할 수 있습니다.
+- **팀 친화적 스택 선택**: Kotlin + Ktor 등도 고려했지만, 메이커스 프로젝트에서 Java 사용률이 높아 팀의 유지보수성과 온보딩 효율을 고려해 Java를 선택했습니다.
+- **최소 의존성 지향**: 최소한의 라이브러리만 사용하여 배포 크기와 로딩 시간을 줄였습니다.
 
 ## 🏗️ Tech Stack
-- **Java 21**
-- **Sentry Webhook**
-- **AWS Lambda**
-- **API Gateway**
+- **Java 21** – 최신 LTS(Long-Term Support) 버전으로, 성능 개선과 안정성을 고려해 선택
+- **Gradle + Shadow Plugin** – AWS Lambda 배포용 fat JAR 빌드
+- **AWS Lambda Java SDK** – Lambda Core 및 Event 지원
+- **Jackson** – Sentry Webhook의 JSON 직렬화/역직렬화
+- **Lombok** – 보일러플레이트 코드 최소화
+- **SLF4J + SimpleLogger** – 경량 로그 처리
+- **java-dotenv** – .env 기반 환경 설정 관리
+- **JUnit 5, Mockito** – 테스트 코드 작성 및 Mock 테스트
 
 ## 🏛️ System Architecture
-<img src="https://github.com/user-attachments/assets/226e93b0-bd41-4a3d-8493-ffc67d86006f" alt="Sentry-Lambda 아키텍처 이미지">
+<img src="https://github.com/user-attachments/assets/00820ca8-d6d9-4ecb-bd2a-a9ad6039568c" alt="Sentry-Lambda 아키텍처 이미지">
+
+> 에러 이벤트가 발생하면, 운영 환경(dev/prod)에 따라 API Gateway의 각기 다른 Stage 엔드포인트가 호출되고, 이를 통해 Lambda가 트리거됩니다. Lambda는 전달받은 이벤트에서 팀명, 서버 유형(FE/BE), 알림 서비스(Slack/Discord 등)를 분기 처리하여, 적절한 채널로 알림을 전송합니다.
 
 ## 🔧 Key Features
-- Sentry Webhook 이벤트 수신
-- API Gateway의 Stage 기능(dev/prod)을 활용한 환경별 요청 분리
-- 팀(team: crew, app 등)과 서버 유형(type: FE, BE 등)에 따른 분기 처리
-- Slack 등 외부 알림 채널로 전송 (확장 가능)
+### Sentry Webhook 이벤트 수신
+- Sentry에서 발생한 **에러 이벤트를 실시간으로 수신하여 처리**합니다.
+
+### 운영 환경(dev/prod)별 분리 처리
+- API Gateway의 **Stage 기능을 활용하여 환경별(dev, prod 등)로 요청을 분리**합니다.
+- 단일 Lambda를 호출하지만, **추후 확장성과 개발 편의성을 고려해 Stage별 엔드포인트를 분리 구성**했습니다.
+
+### 경로 기반의 알림 대상 분기 처리
+- 요청 경로의 **Path Parameter를 기반**으로 **알림 전송 대상을 유연하게 분기 처리**합니다.
+- 요청 경로 형식: `/webhook/{team}/{type}/{service}`
+  - `team` 예시 - `playground`, `crew`, `app`, `platform`, `admin`  
+  - `type` 예시 - `fe`, `be`, `ios`, `android`
+  - ``service`` 예시 - `slack`, `discord`
+    - 해당 필드를 생략하면 기본값으로 `slack`이 사용됩니다.
+
+### 외부 알림 채널 연동 (확장 가능)
+- 알림 채널 전송 로직은 **`NotificationService` 인터페이스와 이를 구현한 서비스들로 분리**되어 있으며, **`Factory` 패턴을 사용해 유연하게 확장할 수 있도록 설계되었습니다.**
+    - `NotificationService`는 공통된 `sendNotification()` 메서드를 정의하고 있으며, 각 서비스별 구현체가 해당 인터페이스를 구현합니다.
+    - `NotificationServiceFactory`는 `WebhookRequest` DTO의 `serviceType(e.g., "slack", "discord")`필드를 기반으로 적절한 알림 서비스 인스턴스를 반환합니다.
+        - 예: `"serviceType": "slack"` → `SlackNotificationService` 인스턴스, `"serviceType": "discord"` → `DiscordNotificationService` 인스턴스
+        - 미등록 서비스 유형 요청 시 `UnsupportedServiceTypeException` 예외 발생
+
+- 이 구조 덕분에, 새로운 알림 채널(예: `Microsoft Teams`, `Mattermost` 등)을 추가하고 싶다면 다음 두 단계만으로 확장 가능합니다:
+    1. `NotificationService를` 구현하는 새 클래스 생성
+    2. `NotificationServiceFactory의` static 블록에 해당 구현체를 등록
+- 이런 방식은 **`OCP (Open-Closed Principle, 개방-폐쇄 원칙)`에 부합하며, 기존 코드를 변경하지 않고 기능을 확장할 수 있게 해줍니다.**
 
 ## 🌿 Branch Strategy
 이 프로젝트는 **GitHub Flow** 전략을 따릅니다:
