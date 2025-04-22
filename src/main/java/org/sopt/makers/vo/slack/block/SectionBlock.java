@@ -1,9 +1,10 @@
 package org.sopt.makers.vo.slack.block;
 
-import org.sopt.makers.vo.slack.text.Text;
 import static org.sopt.makers.global.constant.SlackConstant.*;
 
 import java.util.List;
+
+import org.sopt.makers.vo.slack.text.Text;
 
 public record SectionBlock(
 	String type,
