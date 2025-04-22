@@ -11,7 +11,8 @@ public record SentryEventDetail(
 	String webUrl,
 	String message,
 	String datetime,
-	String level
+	String level,
+	String title
 ) {
 	public static SentryEventDetail from(JsonNode eventNode) {
 		return SentryEventDetail.builder()
@@ -20,6 +21,7 @@ public record SentryEventDetail(
 			.message(eventNode.path("message").asText())
 			.datetime(eventNode.path("datetime").asText())
 			.level(eventNode.path("level").asText())
+			.title(eventNode.path("title").asText())
 			.build();
 	}
 }
