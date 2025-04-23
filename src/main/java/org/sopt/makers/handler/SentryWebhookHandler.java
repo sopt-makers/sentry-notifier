@@ -76,6 +76,9 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 		JsonNode rootNode = parseRequestBody(requestBody);
 		JsonNode eventNode = rootNode.path("data").path("event");
 
+		log.info("rootNode 정보: {}", rootNode);
+		log.info("eventNode 정보: {}", eventNode);
+
 		if (eventNode.isMissingNode() || eventNode.isEmpty()) {
 			log.error("[이벤트 데이터 누락] 요청 본문에 필수 이벤트 정보가 없습니다");
 			throw InvalidSlackPayloadException.from(ErrorMessage.INVALID_SLACK_PAYLOAD);
