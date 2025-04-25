@@ -106,11 +106,18 @@ public class SlackNotificationService implements NotificationService {
 		return SlackMessage.newInstance(blocks, color);
 	}
 
-	/**
+	/*
 	 * 헤더 블록 구성
 	 */
 	private Block buildHeaderBlock(String message) {
-		return HeaderBlock.newInstance(message);
+		String fullMessage = EMOJI_PREFIX + message;
+
+		if (fullMessage.length() > MAX_HEADER_LENGTH) {
+			int maxLength = MAX_HEADER_LENGTH - EMOJI_PREFIX.length() - TRUNCATION_SUFFIX.length();
+			fullMessage = EMOJI_PREFIX + message.substring(0, maxLength) + TRUNCATION_SUFFIX;
+		}
+
+		return HeaderBlock.newInstance(fullMessage);
 	}
 
 	/**
