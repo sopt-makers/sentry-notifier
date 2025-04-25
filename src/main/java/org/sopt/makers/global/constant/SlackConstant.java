@@ -41,6 +41,11 @@ public final class SlackConstant {
 	public static final String ERROR = "error";
 	public static final String CODE = "code";
 
+	// 헤더 관련 상수
+	public static final int MAX_HEADER_LENGTH = 150;
+	public static final String EMOJI_PREFIX = "🚨 ";
+	public static final String TRUNCATION_SUFFIX = "...";
+
 	// 성공 메시지
 	public static final String SUCCESS_MESSAGE = "알림이 성공적으로 전송되었습니다";
 

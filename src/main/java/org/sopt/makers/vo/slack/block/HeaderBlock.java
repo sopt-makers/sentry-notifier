@@ -10,6 +10,6 @@ public record HeaderBlock(
 	Text text
 ) implements Block {
 	public static HeaderBlock newInstance(String text) {
-		return new HeaderBlock(BLOCK_TYPE_HEADER, PlainText.newInstance("🚨 " + text, true));
+		return new HeaderBlock(BLOCK_TYPE_HEADER, PlainText.newInstance(text, true));
 	}
 }
