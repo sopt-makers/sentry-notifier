@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public final class EnvUtil {
 	private static final String SLACK_WEBHOOK_PREFIX = "SLACK_WEBHOOK_";
 	private static final String DISCORD_WEBHOOK_PREFIX = "DISCORD_WEBHOOK_";
-	private static final Dotenv dotenv = Dotenv.configure().load();
+	private static Dotenv dotenv;
 
 	/**
 	 * 서비스 유형에 맞는 웹훅 URL 반환
@@ -41,7 +41,7 @@ public final class EnvUtil {
 			stage.toUpperCase(),
 			type.toUpperCase());
 
-		String webhookUrl = dotenv.get(envKey);
+		String webhookUrl = getDotenv().get(envKey);
 
 		if (webhookUrl == null || webhookUrl.isBlank()) {
 			log.error("Webhook URL을 찾을 수 없습니다: {}", envKey);
@@ -49,6 +49,19 @@ public final class EnvUtil {
 		}
 
 		return webhookUrl;
+	}
+
+
+	public static void setDotenv(Dotenv customDotenv) {
+		dotenv = customDotenv;
+	}
+
+
+	private static Dotenv getDotenv() {
+		if (dotenv == null) {
+			dotenv = Dotenv.configure().load();
+		}
+		return dotenv;
 	}
 
 	private static String resolvePrefix(String serviceTypeLowerCase) {
