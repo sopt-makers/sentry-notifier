@@ -11,29 +11,23 @@ import org.sopt.makers.dto.WebhookRequest;
 import org.sopt.makers.global.config.ObjectMapperConfig;
 import org.sopt.makers.global.exception.checked.SentryCheckedException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
-import org.sopt.makers.global.exception.unchecked.InvalidSlackPayloadException;
 import org.sopt.makers.global.exception.unchecked.SentryUncheckedException;
-import org.sopt.makers.global.util.EnvUtil;
-import org.sopt.makers.service.NotificationContext;
-import org.sopt.makers.service.NotificationServiceFactory;
+import org.sopt.makers.service.NotificationProcessorService;
+import org.sopt.makers.service.SentryEventExtractorService;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-
-	private final ObjectMapper objectMapper;
-
-	public SentryWebhookHandler() {
-		this.objectMapper = ObjectMapperConfig.getInstance();
-	}
+	private final ObjectMapper objectMapper = ObjectMapperConfig.getInstance();
+	private final SentryEventExtractorService eventExtractorService = new SentryEventExtractorService(objectMapper);
+	private final NotificationProcessorService notificationProcessorService = new NotificationProcessorService(objectMapper);
 
 	@Override
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayEvent, Context context) {
@@ -41,9 +35,9 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 			WebhookRequest webhookRequest = WebhookRequest.from(apiGatewayEvent);
 			logWebhookReceived(webhookRequest);
 
-			SentryEventDetail sentryEvent = extractSentryEvent(apiGatewayEvent.getBody());
+			SentryEventDetail sentryEvent = eventExtractorService.extractEvent(apiGatewayEvent.getBody());
 
-			processNotification(webhookRequest, sentryEvent);
+			notificationProcessorService.processNotification(webhookRequest, sentryEvent);
 
 			return createApiGatewayResponse(
 				HttpURLConnection.HTTP_OK,
@@ -66,44 +60,6 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 			webhookRequest.type(),
 			webhookRequest.serviceType()
 		);
-	}
-
-	private SentryEventDetail extractSentryEvent(String requestBody) {
-		JsonNode rootNode = parseRequestBody(requestBody);
-		JsonNode eventNode = rootNode.path("data").path("event");
-
-		log.info("rootNode 정보: {}", rootNode);
-		log.info("eventNode 정보: {}", eventNode);
-
-		if (eventNode.isMissingNode() || eventNode.isEmpty()) {
-			log.error("[이벤트 데이터 누락] 요청 본문에 필수 이벤트 정보가 없습니다");
-			throw InvalidSlackPayloadException.from(ErrorMessage.INVALID_SLACK_PAYLOAD);
-		}
-
-		SentryEventDetail sentryEvent = SentryEventDetail.from(eventNode);
-		log.info("[이벤트 추출] issueId={}, level={}", sentryEvent.issueId(), sentryEvent.level());
-
-		return sentryEvent;
-	}
-
-	private JsonNode parseRequestBody(String requestBody) {
-		try {
-			return objectMapper.readTree(requestBody);
-		} catch (Exception e) {
-			log.error("[요청 본문 파싱 실패] error={}", e.getMessage(), e);
-			throw InvalidSlackPayloadException.from(ErrorMessage.INVALID_SLACK_PAYLOAD);
-		}
-	}
-
-	private void processNotification(WebhookRequest request, SentryEventDetail event) throws SentryCheckedException {
-		String serviceType = request.serviceType();
-		String team = request.team();
-		String stage = request.stage();
-		String type = request.type();
-		String webhookUrl = EnvUtil.getWebhookUrl(serviceType, team, stage, type);
-
-		NotificationContext notificationContext  = new NotificationContext(NotificationServiceFactory.createService(serviceType));
-		notificationContext.executeNotification(team, type, stage, event, webhookUrl);
 	}
 
 	private APIGatewayProxyResponseEvent handleSentryCheckedException(SentryCheckedException e) {
