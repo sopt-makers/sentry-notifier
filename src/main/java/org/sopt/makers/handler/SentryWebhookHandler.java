@@ -14,7 +14,7 @@ import org.sopt.makers.global.exception.message.ErrorMessage;
 import org.sopt.makers.global.exception.unchecked.InvalidSlackPayloadException;
 import org.sopt.makers.global.exception.unchecked.SentryUncheckedException;
 import org.sopt.makers.global.util.EnvUtil;
-import org.sopt.makers.service.NotificationService;
+import org.sopt.makers.service.NotificationContext;
 import org.sopt.makers.service.NotificationServiceFactory;
 
 import com.amazonaws.services.lambda.runtime.Context;
@@ -38,17 +38,13 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 	@Override
 	public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent apiGatewayEvent, Context context) {
 		try {
-			// 웹훅 요청 처리
 			WebhookRequest webhookRequest = WebhookRequest.from(apiGatewayEvent);
 			logWebhookReceived(webhookRequest);
 
-			// Sentry 이벤트 추출
 			SentryEventDetail sentryEvent = extractSentryEvent(apiGatewayEvent.getBody());
 
-			// 알림 전송
-			sendNotification(webhookRequest, sentryEvent);
+			processNotification(webhookRequest, sentryEvent);
 
-			// 성공 응답 반환
 			return createApiGatewayResponse(
 				HttpURLConnection.HTTP_OK,
 				createSuccessResponseBody()
@@ -99,16 +95,15 @@ public class SentryWebhookHandler implements RequestHandler<APIGatewayProxyReque
 		}
 	}
 
-	private void sendNotification(WebhookRequest request, SentryEventDetail event) throws SentryCheckedException {
+	private void processNotification(WebhookRequest request, SentryEventDetail event) throws SentryCheckedException {
 		String serviceType = request.serviceType();
 		String team = request.team();
 		String stage = request.stage();
 		String type = request.type();
-
-		NotificationService notificationService = NotificationServiceFactory.createNotificationService(serviceType);
 		String webhookUrl = EnvUtil.getWebhookUrl(serviceType, team, stage, type);
 
-		notificationService.sendNotification(team, type, stage, event, webhookUrl);
+		NotificationContext notificationContext  = new NotificationContext(NotificationServiceFactory.createService(serviceType));
+		notificationContext.executeNotification(team, type, stage, event, webhookUrl);
 	}
 
 	private APIGatewayProxyResponseEvent handleSentryCheckedException(SentryCheckedException e) {
