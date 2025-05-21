@@ -7,7 +7,7 @@ import org.sopt.makers.global.exception.unchecked.WebhookUrlNotFoundException;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
-class TestEnvUtil {
+public class FakeEnvUtil {
 	private static final String SLACK_WEBHOOK_PREFIX = "SLACK_WEBHOOK_";
 	private static final String DISCORD_WEBHOOK_PREFIX = "DISCORD_WEBHOOK_";
 	private static final Dotenv dotenv = Dotenv.configure()
