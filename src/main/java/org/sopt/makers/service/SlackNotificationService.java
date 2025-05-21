@@ -32,16 +32,13 @@ import org.sopt.makers.vo.slack.text.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@RequiredArgsConstructor
 public class SlackNotificationService implements NotificationService {
-
 	private final ObjectMapper objectMapper;
-
-	public SlackNotificationService() {
-		this.objectMapper = ObjectMapperConfig.getInstance();
-	}
 
 	@Override
 	public void sendNotification(String team, String type, String stage, SentryEventDetail sentryEventDetail,

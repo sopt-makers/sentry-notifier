@@ -27,15 +27,13 @@ import org.sopt.makers.vo.discord.message.DiscordMessage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@RequiredArgsConstructor
 public class DiscordNotificationService implements NotificationService {
 	private final ObjectMapper objectMapper;
-
-	public DiscordNotificationService() {
-		this.objectMapper = ObjectMapperConfig.getInstance();
-	}
 
 	@Override
 	public void sendNotification(String team, String type, String stage, SentryEventDetail sentryEventDetail,
