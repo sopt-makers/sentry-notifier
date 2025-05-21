@@ -20,7 +20,7 @@ public final class EnvUtil {
 	/**
 	 * 서비스 유형에 맞는 웹훅 URL 반환
 	 *
-	 * @param service 서비스 유형 (slack, discord 등)
+	 * @param serviceType 서비스 유형 (slack, discord 등)
 	 * @param team 팀 이름 (crew, app 등)
 	 * @param stage 환경 (dev, prod)
 	 * @param type 서버 유형 (be, fe)
@@ -28,13 +28,13 @@ public final class EnvUtil {
 	 * @throws UnsupportedServiceTypeException 지원하지 않는 서비스 유형인 경우
 	 * @throws WebhookUrlNotFoundException 환경 변수를 찾을 수 없는 경우
 	 */
-	public static String getWebhookUrl(String service, String team, String stage, String type) {
-		if (service == null || team == null || stage == null || type == null) {
-			log.error("환경 변수 입력값이 null입니다: service={}, team={}, stage={}, type={}", service, team, stage, type);
+	public static String getWebhookUrl(String serviceType, String team, String stage, String type) {
+		if (serviceType == null || team == null || stage == null || type == null) {
+			log.error("환경 변수 입력값이 null입니다: serviceType={}, team={}, stage={}, type={}", serviceType, team, stage, type);
 			throw InvalidEnvParameterException.from(ErrorMessage.INVALID_ENV_PARAMETER);
 		}
 
-		String prefix = resolvePrefix(service.toLowerCase());
+		String prefix = resolvePrefix(serviceType.toLowerCase());
 		String envKey = String.format("%s%s_%s_%s",
 			prefix,
 			team.toUpperCase(),
@@ -51,8 +51,8 @@ public final class EnvUtil {
 		return webhookUrl;
 	}
 
-	private static String resolvePrefix(String service) {
-		return switch (service) {
+	private static String resolvePrefix(String serviceTypeLowerCase) {
+		return switch (serviceTypeLowerCase) {
 			case "slack" -> SLACK_WEBHOOK_PREFIX;
 			case "discord" -> DISCORD_WEBHOOK_PREFIX;
 			default -> throw new UnsupportedServiceTypeException(ErrorMessage.UNSUPPORTED_SERVICE_TYPE);
