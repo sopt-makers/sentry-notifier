@@ -3,7 +3,6 @@ package org.sopt.makers.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.sopt.makers.dto.SentryEventDetail;
 import org.sopt.makers.global.config.ObjectMapperConfig;
