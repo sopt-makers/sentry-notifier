@@ -17,7 +17,7 @@ public final class DiscordConstant {
 	public static final String TRUNCATION_SUFFIX = "...";
 
 	// Discord 리소스
-	public static final String SENTRY_ICON_URL = "https://sentry.io/favicon.ico";
+	public static final String SENTRY_ICON_URL = "https://raw.githubusercontent.com/getsentry/sentry/master/src/sentry/static/sentry/images/sentry-glyph-black.png";
 
 	// Discord 임베드 제한
 	public static final int MAX_TITLE_LENGTH = 256;
