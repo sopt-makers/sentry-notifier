@@ -40,6 +40,8 @@ dependencies {
     testImplementation 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.mockito:mockito-core:5.10.0'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.10.0'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
+    testImplementation "org.wiremock:wiremock:3.13.0"
 
     // Env
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
