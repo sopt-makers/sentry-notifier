@@ -16,8 +16,8 @@ import org.sopt.makers.dto.SentryEventDetail;
 import org.sopt.makers.global.config.ObjectMapperConfig;
 import org.sopt.makers.global.constant.Color;
 import org.sopt.makers.global.exception.checked.SentryCheckedException;
-import org.sopt.makers.global.exception.checked.SlackMessageBuildException;
-import org.sopt.makers.global.exception.checked.SlackSendException;
+import org.sopt.makers.global.exception.checked.MessageBuildException;
+import org.sopt.makers.global.exception.checked.SendException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
 import org.sopt.makers.global.exception.unchecked.HttpRequestException;
 import org.sopt.makers.global.util.HttpClientUtil;
@@ -32,16 +32,13 @@ import org.sopt.makers.vo.slack.text.Text;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@RequiredArgsConstructor
 public class SlackNotificationService implements NotificationService {
-
 	private final ObjectMapper objectMapper;
-
-	public SlackNotificationService() {
-		this.objectMapper = ObjectMapperConfig.getInstance();
-	}
 
 	@Override
 	public void sendNotification(String team, String type, String stage, SentryEventDetail sentryEventDetail,
@@ -57,7 +54,7 @@ public class SlackNotificationService implements NotificationService {
 		} catch (DateTimeException e) {
 			log.error("Slack 메시지 생성 실패: team={}, type={}, stage={}, id={}, error={}", team, type, stage,
 				sentryEventDetail.issueId(), e.getMessage(), e);
-			throw SlackMessageBuildException.from(ErrorMessage.SLACK_MESSAGE_BUILD_FAILED);
+			throw MessageBuildException.from(ErrorMessage.SLACK_MESSAGE_BUILD_FAILED);
 		}
 	}
 
@@ -69,19 +66,19 @@ public class SlackNotificationService implements NotificationService {
 			HttpResponse<String> response = HttpClientUtil.sendPost(webhookUrl, CONTENT_TYPE_JSON, jsonPayload);
 			handleSlackResponse(response, team, type, stage, sentryEventDetail);
 		} catch (HttpRequestException e) {
-			throw SlackSendException.from(e.getBaseErrorCode());
+			throw SendException.from(e.getBaseErrorCode());
 		} catch (IOException e) {
-			throw SlackSendException.from(ErrorMessage.SLACK_SERIALIZATION_FAILED);
+			throw SendException.from(ErrorMessage.SLACK_SERIALIZATION_FAILED);
 		}
 	}
 
 	private void handleSlackResponse(HttpResponse<String> response, String team, String type, String stage,
-		SentryEventDetail sentryEventDetail) throws SlackSendException {
+		SentryEventDetail sentryEventDetail) throws SendException {
 		if (response.statusCode() != 200 || !"ok".equalsIgnoreCase(response.body())) {
 			String errorMsg = String.format("Slack API 응답 오류, status: %d, body: %s", response.statusCode(),
 				response.body());
 			log.error("{}", errorMsg);
-			throw SlackSendException.from(ErrorMessage.SLACK_SEND_FAILED);
+			throw SendException.from(ErrorMessage.SLACK_SEND_FAILED);
 		}
 
 		log.info("[Slack 전송 완료] team={}, type={}, stage={}, id={}, statusCode={}", team, type, stage,
