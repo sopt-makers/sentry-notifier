@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 public enum ErrorMessage implements BaseErrorCode {
 	// ===== Webhook 관련 오류 =====
 	INVALID_ENV_PARAMETER(400, "환경 변수 입력값이 올바르지 않습니다.", "W4001"),
-	WEBHOOK_URL_NOT_FOUND(500, "Webhook URL을 찾을 수 없습니다.", "W5001"),
+	WEBHOOK_URL_NOT_FOUND(404, "Webhook URL을 찾을 수 없습니다.", "W4041"),
 
 	// ===== Slack 및 일반 서비스 오류 =====
 	INVALID_SLACK_PAYLOAD(400, "Slack 페이로드 형식이 잘못되었습니다.", "S4001"),
