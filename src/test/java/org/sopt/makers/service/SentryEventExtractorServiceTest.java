@@ -11,7 +11,7 @@ import org.sopt.makers.handler.FakeSentryPayload;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@DisplayName("SentryEventExtractorService 단위 테스트")
+@DisplayName("SentryEventExtractorService 테스트")
 class SentryEventExtractorServiceTest {
 	private final ObjectMapper objectMapper = ObjectMapperConfig.getInstance();
 	private final SentryEventExtractorService extractorService = new SentryEventExtractorService(objectMapper);
