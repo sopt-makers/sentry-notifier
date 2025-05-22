@@ -2,7 +2,7 @@ package org.sopt.makers.service;
 
 import org.sopt.makers.dto.SentryEventDetail;
 import org.sopt.makers.global.exception.message.ErrorMessage;
-import org.sopt.makers.global.exception.unchecked.InvalidSlackPayloadException;
+import org.sopt.makers.global.exception.unchecked.InvalidPayloadException;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +24,7 @@ public class SentryEventExtractorService {
 
 		if (eventNode.isMissingNode() || eventNode.isEmpty()) {
 			log.error("[이벤트 데이터 누락] 요청 본문에 필수 이벤트 정보가 없습니다");
-			throw InvalidSlackPayloadException.from(ErrorMessage.INVALID_SLACK_PAYLOAD);
+			throw InvalidPayloadException.from(ErrorMessage.INVALID_PAYLOAD);
 		}
 
 		SentryEventDetail sentryEvent = SentryEventDetail.from(eventNode);
@@ -38,7 +38,7 @@ public class SentryEventExtractorService {
 			return objectMapper.readTree(requestBody);
 		} catch (Exception e) {
 			log.error("[요청 본문 파싱 실패] error={}", e.getMessage(), e);
-			throw InvalidSlackPayloadException.from(ErrorMessage.INVALID_SLACK_PAYLOAD);
+			throw InvalidPayloadException.from(ErrorMessage.INVALID_PAYLOAD);
 		}
 	}
 }

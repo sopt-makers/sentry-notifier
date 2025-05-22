@@ -13,7 +13,6 @@ public enum ErrorMessage implements BaseErrorCode {
 	WEBHOOK_URL_NOT_FOUND(404, "Webhook URL을 찾을 수 없습니다.", "W4041"),
 
 	// ===== Slack 및 일반 서비스 오류 =====
-	INVALID_SLACK_PAYLOAD(400, "Slack 페이로드 형식이 잘못되었습니다.", "S4001"),
 	SLACK_MESSAGE_BUILD_FAILED(500, "Slack 메시지 생성에 실패했습니다.", "S5001"),
 	SLACK_SEND_INTERRUPTED(500, "Slack 알림 전송이 중단되었습니다.", "S5002"),
 	SLACK_SERIALIZATION_FAILED(500, "Slack 메시지를 JSON으로 변환하는 중 오류가 발생했습니다.", "S5003"),
@@ -30,6 +29,7 @@ public enum ErrorMessage implements BaseErrorCode {
 
 	// ===== 공통 오류 =====
 	UNSUPPORTED_SERVICE_TYPE(400, "지원하지 않는 서비스 유형입니다.", "C4001"),
+	INVALID_PAYLOAD(400, "페이로드 형식이 잘못되었습니다.", "C4002"),
 	UNEXPECTED_SERVER_ERROR(500, "내부 서버 오류가 발생했습니다.", "C5001");
 
 	private final int status;
