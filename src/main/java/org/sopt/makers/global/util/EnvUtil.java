@@ -51,13 +51,12 @@ public final class EnvUtil {
 		return webhookUrl;
 	}
 
-
 	public static void setDotenv(Dotenv customDotenv) {
 		dotenv = customDotenv;
 	}
 
 
-	private static Dotenv getDotenv() {
+	private static synchronized Dotenv getDotenv() {
 		if (dotenv == null) {
 			dotenv = Dotenv.configure().load();
 		}
