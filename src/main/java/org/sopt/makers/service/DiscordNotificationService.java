@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.sopt.makers.dto.SentryEventDetail;
-import org.sopt.makers.global.config.ObjectMapperConfig;
 import org.sopt.makers.global.constant.Color;
 import org.sopt.makers.global.exception.checked.MessageBuildException;
 import org.sopt.makers.global.exception.checked.SendException;
@@ -114,7 +113,7 @@ public class DiscordNotificationService implements NotificationService {
 
 		// Discord 메시지 생성
 		return DiscordMessage.newInstance(
-			"Sentry Monitor",
+			"Sentry",
 			SENTRY_ICON_URL,
 			List.of(embed));
 	}
