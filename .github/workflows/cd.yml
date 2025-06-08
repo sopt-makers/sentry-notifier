@@ -58,14 +58,7 @@ jobs:
               "attachments": [{
                 "color": "good",
                 "title": "✅ Lambda 배포 성공",
-                "text": "Sentry Notifier Lambda가 성공적으로 배포되었습니다.",
-                "fields": [
-                  {
-                    "title": "Workflow Link",
-                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>",
-                    "short": true
-                  }
-                ]
+                "text": "Sentry Notifier Lambda가 성공적으로 배포되었습니다.\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>"
               }]
             }
         env:
@@ -81,14 +74,7 @@ jobs:
               "attachments": [{
                 "color": "danger",
                 "title": "❌ Lambda 배포 실패",
-                "text": "Sentry Notifier Lambda 배포에 실패했습니다.",
-                "fields": [
-                  {
-                    "title": "Workflow Link",
-                    "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>",
-                    "short": true
-                  }
-                ]
+                "text": "Sentry Notifier Lambda 배포에 실패했습니다.\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|워크플로우 링크>"
               }]
             }
         env:
