@@ -14,15 +14,15 @@ Spring 없이 Java만으로 경량 구현된 이 Lambda 함수는 다음과 같�
 
 ## 🎯 Motivation
 
-Sentry는 **탁월한 에러 모니터링 도구**지만, Slack과의 공식 연동 기능은 **팀 플랜 이상(월 $26, 약 37,000원)의 유료 요금제**를 구독해야만 사용할 수 있습니다.
+Sentry는 **탁월한 에러 모니터링 도구**지만, Slack, Discord와의 공식 연동 기능은 **팀 플랜 이상(월 $26, 약 37,000원)의 유료 요금제**를 구독해야만 사용할 수 있습니다.
 
 **SOPT Makers** 조직에서는 이 비용을 매달 지출하는 것이 현실적으로 부담스러워, **무료 플랜 내에서 할 수 있는 범위 안에서 Sentry를 활용**해왔습니다. 다행히 **에러 수집 및 분석 기능 자체는 무료 플랜만으로도 충분히 유용**했기 때문에, 기존에는 실시간 알림 없이도 에러를 관리해왔습니다.
 
-하지만 시간이 지날수록, **실시간 알림이 없다는 점이 에러 대응 속도에 한계를 만든다는 문제를 체감**했습니다. **Slack과 같은 커뮤니케이션 툴과 연동해 실시간 알림을 받을 수 있어야** 에러 발생 시 더 **신속하고 효과적인 대응이 가능**하다고 판단했습니다.
+하지만 시간이 지날수록, **실시간 알림이 없다는 점이 에러 대응 속도에 한계를 만든다는 문제를 체감**했습니다. **Slack, Discord와 같은 커뮤니케이션 툴과 연동해 실시간 알림을 받을 수 있어야** 에러 발생 시 더 **신속하고 효과적인 대응이 가능**하다고 판단했습니다.
 
 조사 과정에서 **Sentry의 무료 플랜에서도 Webhook 기능은 제공**된다는 사실을 확인했고, 이를 활용하면 **별도의 유료 요금제 없이도 Slack 알림 연동을 직접 구현할 수 있다**는 가능성을 발견했습니다. 또한, 이 기능을 **AWS Lambda의 무료 실행 한도 내에서 충분히 운영 가능**하다는 점도 **비용 부담 없이 실시간 알림 시스템을 구축할 수 있는 결정적 장점**이었습니다.
 
-이에 **Sentry Webhook 이벤트를 Slack Webhook 포맷으로 변환**해 전달하는 **경량 Lambda 서비스를 직접 구축**했습니다.
+이에 **Sentry Webhook 이벤트를 Slack/Discord Webhook 포맷으로 변환**해 전달하는 **경량 Lambda 서비스를 직접 구축**했습니다.
 
 결과적으로 이 프로젝트는 **비용 절감**, **운영 효율 향상**, 그리고 **기술적 도전**이라는 세 가지 의미를 모두 담은 **작지만 실용적인 인프라 개선 사례**가 되었습니다.
 
@@ -34,10 +34,13 @@ Sentry는 **탁월한 에러 모니터링 도구**지만, Slack과의 공식 연
 - **Lombok** – 보일러플레이트 코드 최소화
 - **SLF4J + SimpleLogger** – 경량 로그 처리
 - **java-dotenv** – .env 기반 환경 설정 관리
-- **JUnit 5, Mockito** – 테스트 코드 작성 및 Mock 테스트
+- **JUnit 5, Mockito, AssertJ** – 테스트 코드 작성 및 Mock 테스트
+- **WireMock** – HTTP API 모킹을 통한 통합 테스트
 
 ## 🏛️ System Architecture
-<img src="https://github.com/user-attachments/assets/00820ca8-d6d9-4ecb-bd2a-a9ad6039568c" alt="Sentry-Lambda 아키텍처 이미지">
+<img src="https://github.com/user-attachments/assets/00820ca8-d6d9-4ecb-bd2a-a9ad6039568c" alt="Sentry-Lambda-Slack 아키텍처 이미지">
+<img src="https://github.com/user-attachments/assets/d6b926e4-be35-4942-b5c2-1249eb443102" alt="Sentry-Lambda-Discord 아키텍처 이미지">
+
 
 > 에러 이벤트가 발생하면, 운영 환경(dev/prod)에 따라 API Gateway의 각기 다른 Stage 엔드포인트가 호출되고, 이를 통해 Lambda가 트리거됩니다. Lambda는 전달받은 이벤트에서 팀명, 서버 유형(FE/BE), 알림 서비스(Slack/Discord 등)를 분기 처리하여, 적절한 채널로 알림을 전송합니다.
 
@@ -58,16 +61,22 @@ Sentry는 **탁월한 에러 모니터링 도구**지만, Slack과의 공식 연
     - 해당 필드를 생략하면 기본값으로 `slack`이 사용됩니다.
 
 ### 외부 알림 채널 연동 (확장 가능)
-- 알림 채널 전송 로직은 **`NotificationService` 인터페이스와 이를 구현한 서비스들로 분리**되어 있으며, **`Factory` 패턴을 사용해 유연하게 확장할 수 있도록 설계되었습니다.**
-  - `NotificationService`는 공통된 `sendNotification()` 메서드를 정의하고 있으며, 각 서비스별 구현체가 해당 인터페이스를 구현합니다.
-  - `NotificationServiceFactory`는 `WebhookRequest` DTO의 `serviceType(e.g., "slack", "discord")`필드를 기반으로 적절한 알림 서비스 인스턴스를 반환합니다.
-    - 예: `"serviceType": "slack"` → `SlackNotificationService` 인스턴스, `"serviceType": "discord"` → `DiscordNotificationService` 인스턴스
-    - 미등록 서비스 유형 요청 시 `UnsupportedServiceTypeException` 예외 발생
 
-- 이 구조 덕분에, 새로운 알림 채널(예: `Microsoft Teams`, `Mattermost` 등)을 추가하고 싶다면 다음 두 단계만으로 확장 가능합니다:
-    1. `NotificationService를` 구현하는 새 클래스 생성
-    2. `NotificationServiceFactory의` static 블록에 해당 구현체를 등록
-- 이런 방식은 **`OCP (Open-Closed Principle, 개방-폐쇄 원칙)`에 부합하며, 기존 코드를 변경하지 않고 기능을 확장할 수 있게 해줍니다.**
+#### 전략패턴과 팩토리패턴 도입 배경: 멀티 플랫폼 알림 지원 요구사항
+- 초기에는 Slack만 지원했지만, Discord 추가로 확장 가능한 아키텍처가 필요해졌습니다.
+- `service` 파라미터가 런타임에 결정되므로 전략패턴을 적용했고, 객체 생성 관리를 위해 심플 팩토리패턴을 함께 도입했습니다.
+
+#### 설계 패턴 선택 과정
+- 팩토리 메서드 패턴도 고려했지만, 현재 요구사항 대비 과도한 복잡성이 증가하여 실용성을 우선시해 심플 팩토리패턴을 선택했습니다.
+- 완벽한 OCP 준수보다는 코드의 단순성과 가독성을 중시했습니다.
+
+#### 현재 구조
+- `NotificationService` 인터페이스를 각 플랫폼별 구현체가 구현
+- `NotificationServiceFactory`가 `WebhookRequest`의 `serviceType` 파라미터("slack", "discord")에 따라 적절한 인스턴스 반환
+- `NotificationContext`가 선택된 서비스를 통해 실제 알림을 전송하는 역할 수행
+- 새로운 알림 채널 추가 시 두 단계만 필요:
+1. `NotificationService` 구현 클래스 생성
+2. `NotificationServiceFactory`에 구현체 등록
 
 ## 🌿 Branch Strategy
 이 프로젝트는 **GitHub Flow** 전략을 따릅니다:
@@ -96,8 +105,8 @@ footer (선택 사항)
 
 
 ## 📸 Implementation Results
-<img src="https://github.com/user-attachments/assets/0ef3eb16-3c37-4409-892f-ec5b3f04d707" alt="Sentry-Notifier FE 스크린샷">
+<img src="https://github.com/user-attachments/assets/0ef3eb16-3c37-4409-892f-ec5b3f04d707" alt="Sentry-Notifier Slack 스크린샷">
 
 <br>
 
-<img src="https://github.com/user-attachments/assets/b58b9c70-2bd0-4f82-a85d-9d2bf6b9d086" alt="Sentry-Notifier BE 스크린샷">
+<img src="https://github.com/user-attachments/assets/d5e4bfeb-991c-4256-b691-07175f68b97c" alt="Sentry-Notifier Discord 스크린샷">
