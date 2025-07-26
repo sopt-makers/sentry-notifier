@@ -105,8 +105,13 @@ footer (선택 사항)
 
 
 ## 📸 Implementation Results
+
+### Slack
+
 <img src="https://github.com/user-attachments/assets/0ef3eb16-3c37-4409-892f-ec5b3f04d707" alt="Sentry-Notifier Slack 스크린샷">
 
 <br>
+
+### Discord
 
 <img src="https://github.com/user-attachments/assets/d5e4bfeb-991c-4256-b691-07175f68b97c" alt="Sentry-Notifier Discord 스크린샷">
