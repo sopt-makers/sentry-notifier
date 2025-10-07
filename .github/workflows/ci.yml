@@ -25,7 +25,9 @@ jobs:
       - name: Create .env file
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.DOTENV_FILE }}" > src/main/resources/.env
+          printf '%s' "$DOTENV_FILE" > src/main/resources/.env
+        env:
+          DOTENV_FILE: ${{ secrets.DOTENV_FILE }}
 
       - name: Compile and run test
         run: |
