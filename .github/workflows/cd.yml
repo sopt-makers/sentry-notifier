@@ -24,12 +24,9 @@ jobs:
       - name: Create .env file
         run: |
           mkdir -p src/main/resources
-          cat << EOF > src/main/resources/.env
-          SLACK_WEBHOOK_CREW_DEV_BE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_BE }}
-          SLACK_WEBHOOK_CREW_DEV_FE=${{ secrets.SLACK_WEBHOOK_CREW_DEV_FE }}
-          SLACK_WEBHOOK_CREW_PROD_BE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_BE }}
-          SLACK_WEBHOOK_CREW_PROD_FE=${{ secrets.SLACK_WEBHOOK_CREW_PROD_FE }}
-          EOF
+          printf '%s' "$DOTENV_FILE" > src/main/resources/.env
+        env:
+          DOTENV_FILE: ${{ secrets.DOTENV_FILE }}
 
       - name: Build shadow JAR (default = shadowJar)
         run: ./gradlew build
