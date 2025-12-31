@@ -181,8 +181,17 @@ public class DiscordNotificationService implements NotificationService {
 	 * ISO 날짜 포맷팅
 	 */
 	private String formatDateTime(String isoDatetime) {
-		OffsetDateTime utcTime = OffsetDateTime.parse(isoDatetime, DateTimeFormatter.ISO_DATE_TIME);
-		LocalDateTime koreaTime = utcTime.atZoneSameInstant(ZoneId.of(TIMEZONE_SEOUL)).toLocalDateTime();
-		return koreaTime.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN));
+		if (isoDatetime == null) {
+			return "Unknown Date";
+		}
+
+		try {
+			OffsetDateTime utcTime = OffsetDateTime.parse(isoDatetime, DateTimeFormatter.ISO_DATE_TIME);
+			LocalDateTime koreaTime = utcTime.atZoneSameInstant(ZoneId.of(TIMEZONE_SEOUL)).toLocalDateTime();
+			return koreaTime.format(DateTimeFormatter.ofPattern(DATE_FORMAT_PATTERN));
+		} catch (DateTimeException e) {
+			log.warn("[Date Parsing Failed] rawValue={}", isoDatetime);
+			return isoDatetime;
+		}
 	}
 }
