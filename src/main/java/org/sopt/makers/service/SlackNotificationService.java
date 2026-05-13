@@ -21,11 +21,9 @@ import org.sopt.makers.global.exception.checked.SendException;
 import org.sopt.makers.global.exception.message.ErrorMessage;
 import org.sopt.makers.global.exception.unchecked.HttpRequestException;
 import org.sopt.makers.global.util.HttpClientUtil;
-import org.sopt.makers.vo.slack.block.ActionsBlock;
 import org.sopt.makers.vo.slack.block.Block;
 import org.sopt.makers.vo.slack.block.HeaderBlock;
 import org.sopt.makers.vo.slack.block.SectionBlock;
-import org.sopt.makers.vo.slack.element.Button;
 import org.sopt.makers.vo.slack.message.SlackMessage;
 import org.sopt.makers.vo.slack.text.MarkdownText;
 import org.sopt.makers.vo.slack.text.Text;
@@ -98,7 +96,7 @@ public class SlackNotificationService implements NotificationService {
 		blocks.add(buildDetailsBlock(team, type, stage, formattedDate, sentryEventDetail.issueId(),
 			sentryEventDetail.level()));
 		blocks.add(buildMessageBlock(sentryEventDetail.title()));
-		blocks.add(buildActionsBlock(sentryEventDetail.webUrl()));
+		blocks.add(buildIssueLinkBlock(sentryEventDetail.webUrl()));
 
 		return SlackMessage.newInstance(blocks, color);
 	}
@@ -146,10 +144,15 @@ public class SlackNotificationService implements NotificationService {
 	}
 
 	/**
-	 * 액션 블록 구성 (버튼)
+	 * 이슈 상세 링크 블록 구성
 	 */
-	private Block buildActionsBlock(String webUrl) {
-		return ActionsBlock.newInstance(List.of(Button.newInstance(SENTRY_BUTTON_TEXT, webUrl)));
+	private Block buildIssueLinkBlock(String webUrl) {
+		if (webUrl == null || webUrl.isBlank()) {
+			return SectionBlock.newInstanceWithText(MarkdownText.newInstance(SENTRY_BUTTON_TEXT));
+		}
+
+		return SectionBlock.newInstanceWithText(
+			MarkdownText.newInstance("<%s|%s>".formatted(webUrl, SENTRY_BUTTON_TEXT)));
 	}
 
 	/**
